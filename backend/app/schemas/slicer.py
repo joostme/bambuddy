@@ -165,9 +165,9 @@ class SliceRequest(BaseModel):
         description=(
             "Override the process preset's curr_bed_type for this slice. Canonical "
             "BambuStudio / OrcaSlicer values: 'Cool Plate', 'Engineering Plate', "
-            "'High Temp Plate', 'Textured PEI Plate', 'Smooth PEI Plate', "
-            "'Cool Plate (SuperTack)', 'Supertack Plate'. None ⇒ inherit from the "
-            "process preset unchanged (#1337)."
+            "'High Temp Plate', 'Textured PEI Plate', 'Supertack Plate'. The UI names "
+            "'Cool Plate (SuperTack)' and 'Smooth PEI Plate' are mapped to their "
+            "keys. None ⇒ inherit from the process preset unchanged (#1337)."
         ),
     )
     auto_orient: bool = Field(

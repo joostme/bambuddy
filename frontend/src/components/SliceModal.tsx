@@ -1310,21 +1310,20 @@ function CloudStatusBanner({
 }
 
 // Build-plate options offered in the SliceModal (#1337). Values are the
-// canonical strings the slicer's StaticPrintConfig validator accepts as
-// `curr_bed_type` — BambuStudio is the default sidecar, so this matches its
-// enum; OrcaSlicer accepts the same set with a Supertack alias that users
-// can target via the same dropdown if they re-import their presets.
+// `curr_bed_type` enum keys BambuStudio and OrcaSlicer share. Their UI names
+// ("Cool Plate (SuperTack)", "Smooth PEI Plate") are labels only: the CLI
+// replaces an unknown key with its default, Cool Plate, so the slice silently
+// gets the Cool Plate bed temperature. Smooth PEI is the High Temp Plate there.
 const BED_TYPE_OPTIONS: { value: string; labelKey: string; fallback: string }[] = [
   { value: 'Cool Plate', labelKey: 'slice.bedType.coolPlate', fallback: 'Cool Plate' },
   {
-    value: 'Cool Plate (SuperTack)',
+    value: 'Supertack Plate',
     labelKey: 'slice.bedType.coolPlateSuperTack',
     fallback: 'Cool Plate SuperTack',
   },
   { value: 'Engineering Plate', labelKey: 'slice.bedType.engineering', fallback: 'Engineering Plate' },
   { value: 'High Temp Plate', labelKey: 'slice.bedType.highTemp', fallback: 'High Temp Plate' },
   { value: 'Textured PEI Plate', labelKey: 'slice.bedType.texturedPEI', fallback: 'Textured PEI Plate' },
-  { value: 'Smooth PEI Plate', labelKey: 'slice.bedType.smoothPEI', fallback: 'Smooth PEI Plate' },
 ];
 
 function BedTypeDropdown({

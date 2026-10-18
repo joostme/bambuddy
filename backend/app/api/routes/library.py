@@ -3796,6 +3796,16 @@ async def get_library_file_filament_requirements(
     }
 
 
+# Slicer UI names that earlier Bambuddy versions sent as ``curr_bed_type``
+# (and that saved slicer pipelines may still hold). Neither slicer knows them
+# as enum keys and falls back to Cool Plate, so the slice gets the Cool Plate
+# bed temperature instead of the picked plate's.
+_BED_TYPE_ALIASES = {
+    "Cool Plate (SuperTack)": "Supertack Plate",
+    "Smooth PEI Plate": "High Temp Plate",
+}
+
+
 def _patch_process_bed_type(process_json: str, bed_type: str) -> str:
     """Overwrite ``curr_bed_type`` in a process-profile JSON before forwarding
     to the slicer sidecar.
@@ -3815,7 +3825,7 @@ def _patch_process_bed_type(process_json: str, bed_type: str) -> str:
         return process_json
     if not isinstance(profile, dict):
         return process_json
-    profile["curr_bed_type"] = bed_type
+    profile["curr_bed_type"] = _BED_TYPE_ALIASES.get(bed_type, bed_type)
     return json.dumps(profile)
 
 
