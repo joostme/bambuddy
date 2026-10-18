@@ -1938,12 +1938,12 @@ class TestAutoUnlinkHeldForGrace:
         return ids
 
     @staticmethod
-    def _unit(blank: bool):
+    def _unit(blank: bool, blank_color: str = ""):
         return [
             {
                 "id": 1,
                 "tray": [
-                    {"id": t, "exists": False, "tray_type": "", "tray_color": "", "state": 9}
+                    {"id": t, "exists": False, "tray_type": "", "tray_color": blank_color, "state": 9}
                     if blank
                     else {"id": t, "exists": True, "tray_type": "PLA", "tray_color": "858585FF", "state": 11}
                     for t in range(4)
@@ -1982,6 +1982,23 @@ class TestAutoUnlinkHeldForGrace:
             # one starts a fresh clock instead of confirming the old one.
             clock[0] += slot_unlink_grace.GRACE_SECONDS
             await TestAutoUnlinkOccupiedSlot._run(printer.id, blank, _make_printing_status(blank, state="IDLE"))
+
+        assert await self._surviving(db_session, ids) == ids
+
+    @pytest.mark.asyncio
+    @pytest.mark.integration
+    async def test_a_zero_colour_after_power_up_is_held_like_a_blank_one(
+        self, async_client: AsyncClient, printer_factory, spool_factory, db_session: AsyncSession
+    ):
+        """A P1S AMS reports its slots as ``00000000`` with no type right after
+        power-up. That was taken for a different spool and unlinked at once
+        (``fingerprint mismatch (cur=00000000/ fp=...)``) instead of held."""
+        printer = await printer_factory(name="P1S")
+        spool = await spool_factory(material="PLA", rgba="000000FF")
+        ids = await self._assign_unit(db_session, printer, spool)
+
+        blank = self._unit(blank=True, blank_color="00000000")
+        await TestAutoUnlinkOccupiedSlot._run(printer.id, blank, _make_printing_status(blank, state="IDLE"))
 
         assert await self._surviving(db_session, ids) == ids
 
