@@ -30,11 +30,10 @@ class TestSliceRequestBedTypeField:
     def test_bed_type_accepts_canonical_values(self):
         for value in (
             "Cool Plate",
-            "Cool Plate (SuperTack)",
+            "Supertack Plate",
             "Engineering Plate",
             "High Temp Plate",
             "Textured PEI Plate",
-            "Smooth PEI Plate",
         ):
             req = SliceRequest(
                 printer_preset=PresetRef(source="local", id="1"),
@@ -67,6 +66,20 @@ class TestPatchProcessBedType:
         assert parsed["curr_bed_type"] == "Engineering Plate"
         # Other fields preserved
         assert parsed["name"] == "0.20mm Standard"
+
+    @pytest.mark.parametrize(
+        ("ui_name", "enum_key"),
+        [
+            ("Cool Plate (SuperTack)", "Supertack Plate"),
+            ("Smooth PEI Plate", "High Temp Plate"),
+        ],
+    )
+    def test_maps_slicer_ui_names_to_enum_keys(self, ui_name, enum_key):
+        # The slicer CLI swaps an unknown key for Cool Plate, which silently
+        # slices with the Cool Plate bed temperature.
+        process_json = json.dumps({"name": "0.20mm Standard", "curr_bed_type": "Cool Plate"})
+        result = _patch_process_bed_type(process_json, ui_name)
+        assert json.loads(result)["curr_bed_type"] == enum_key
 
     def test_returns_input_unchanged_when_json_is_invalid(self):
         # The slicer would error on this anyway; the patch helper is a
