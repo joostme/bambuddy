@@ -2257,6 +2257,12 @@ async def _unlink_stale_assignments(printer_id: int, ams_data: list, printing_no
                     cur_state = current_tray.get("state")
                     fp_color = assignment.fingerprint_color or ""
                     fp_type = assignment.fingerprint_type or ""
+                    # A slot without filament data reports its colour as
+                    # 00000000 as often as blank: a P1S AMS does so right after
+                    # power-up, before it has re-read its spools, and it is what
+                    # resetting a slot writes. Taken for a colour, that read as
+                    # a different spool and skipped the grace hold below.
+                    tray_blank = not cur_type.strip() and not cur_color.strip().strip("0")
 
                     # SpoolBuddy pre-config replay: fingerprint_type empty means
                     # the slot was empty when the user pre-assigned via SpoolBuddy
@@ -2326,7 +2332,7 @@ async def _unlink_stale_assignments(printer_id: int, ams_data: list, printing_no
                         # firmware clears colour and type when it unloads a spool
                         # it just emptied. Unlinking here would erase the record
                         # of which spool fed the print so far.
-                        if printing_now and not cur_color.strip() and not cur_type.strip():
+                        if printing_now and tray_blank:
                             logger.info(
                                 "Auto-unlink skipped: spool %d AMS%d-T%d — tray data cleared during a running print "
                                 "(runout?)",
@@ -2350,8 +2356,7 @@ async def _unlink_stale_assignments(printer_id: int, ams_data: list, printing_no
                         # rather than cancelling it (#3186).
                         if (
                             spool_present(current_tray) is True
-                            and not cur_color.strip()
-                            and not cur_type.strip()
+                            and tray_blank
                             and not slot_unlink_grace.is_held(
                                 printer_id,
                                 ("inventory", assignment.ams_id, assignment.tray_id, assignment.spool_id),
@@ -2370,7 +2375,7 @@ async def _unlink_stale_assignments(printer_id: int, ams_data: list, printing_no
                         # unit's bits, colour and type for a moment and lost
                         # four saved assignments that way (#3186); unlink only
                         # if the slot is still blank after the grace period.
-                        if not cur_color.strip() and not cur_type.strip():
+                        if tray_blank:
                             hold_key = ("inventory", assignment.ams_id, assignment.tray_id, assignment.spool_id)
                             if not slot_unlink_grace.removal_confirmed(printer_id, hold_key):
                                 held.add(hold_key)
